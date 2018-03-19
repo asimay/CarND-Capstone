@@ -60,6 +60,8 @@ class DBWNode(object):
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.dbw_enabled_cb)
 
+        rospy.loginfo("dbw_node python init log")
+
         self.loop()
 
     def loop(self):

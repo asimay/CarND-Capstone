@@ -31,26 +31,19 @@
 #ifndef PID_CONTROL_H
 #define PID_CONTROL_H
 
-namespace DBWNODE_NS{
+namespace DBWNODE_NS {
 
-class PIDControl
-{
-public:
-    PIDControl();
-    PIDControl(double kp, double ki, double kd);
-    ~PIDControl();
+class PIDController {
+    public:
+        PIDController();
+        PIDController(const double kp, const double ki, const double kd);
+        ~PIDController();
 
-private:
-    /* data */
-    double kp_;
-    double ki_;
-    double kd_;
+    private:
+        double kp_;
+        double ki_;
+        double kd_;
 };
-
-
-
 }
-
-
 
 #endif

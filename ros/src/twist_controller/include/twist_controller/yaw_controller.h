@@ -34,26 +34,23 @@
 #include <math.h>
 #include <algorithm>
 
-namespace DBWNODE_NS{
+namespace DBWNODE_NS {
 
-class YawController
-{
-public:
-    YawController();
-	YawController(double wheel_base, double steer_ratio, double min_speed, double max_lat_accel, double max_steer_angle);
-    ~YawController();
+class YawController {
+    public:
+        YawController();
+        YawController(
+            const double wheel_base, const double steer_ratio, const double min_speed, 
+            const double max_lat_accel, const double max_steer_angle
+        );
+        ~YawController();
 
-    double get_angle(double radius);
-    double get_steering(double linear_velocity, double angular_velocity, double current_velocity);
+        double get_angle(const double radius);
+        double get_steering(const double linear_velocity, const double angular_velocity, const double current_velocity);
 
-private:
-
-    double wheel_base_, steer_ratio_, min_speed_, max_lat_accel_, min_angle_, max_angle_;
-
+    private:
+        double wheel_base_, steer_ratio_, min_speed_, max_lat_accel_, min_angle_, max_angle_;
 };
-
-
-
 }
 
 #endif

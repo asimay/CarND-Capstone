@@ -132,14 +132,24 @@ add_library(dbw_node_core
   src/dbw_node_core.cpp
 )
 
+add_library(predicted_control_values
+  include/twist_controller/predicted_control_values.h
+  src/predicted_control_values.cpp
+)
+
+add_library(twist_controller
+  include/twist_controller/twist_controller.h
+  src/twist_controller.cpp
+)
+
 add_library(yaw_controller
   include/twist_controller/yaw_controller.h
   src/yaw_controller.cpp
 )
 
-add_library(PIDControl
-  include/twist_controller/PIDControl.h
-  src/PIDControl.cpp
+add_library(pid_controller
+  include/twist_controller/pid_controller.h
+  src/pid_controller.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -163,7 +173,7 @@ add_executable(dbw_node src/dbw_node.cpp)
 add_dependencies(dbw_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(dbw_node dbw_node_core yaw_controller PIDControl
+target_link_libraries(dbw_node dbw_node_core predicted_control_values twist_controller yaw_controller pid_controller
    ${catkin_LIBRARIES}
 )
 

@@ -37,43 +37,43 @@
 #include <dbw_mkz_msgs/ThrottleCmd.h>
 #include <dbw_mkz_msgs/SteeringCmd.h>
 #include <dbw_mkz_msgs/BrakeCmd.h>
+#include "predicted_control_values.h"
+#include "twist_controller.h"
 
 #define LOOP_RATE (50)
 
-namespace DBWNODE_NS{
+namespace DBWNODE_NS {
 
-class DBWNode
-{
-public:
-    DBWNode();
-    ~DBWNode();
-    void run();
+class DBWNode {
+    public:
+        DBWNode();
+        ~DBWNode();
+        void run();
 
-private:
-    ros::NodeHandle nh_;
-    ros::NodeHandle private_nh_;
+    private:
+        ros::NodeHandle nh_;
+        ros::NodeHandle private_nh_;
 
-    ros::Publisher throttle_pub_, brake_pub_, steer_pub_;
-    ros::Subscriber sub_vel_, sub_cur_vel_, sub_enable_;
+        ros::Publisher throttle_pub_, brake_pub_, steer_pub_;
+        ros::Subscriber sub_vel_, sub_cur_vel_, sub_enable_; /*  */
 
-    void initForROS();
-    void cbFromTwistCmd(const geometry_msgs::TwistStamped::ConstPtr& msg);
-    void cbFromRecvEnable(const std_msgs::Bool::ConstPtr& msg); 
-    void cbFromCurrentVelocity(const geometry_msgs::TwistStamped::ConstPtr& msg);
-    void getPredictedControlValues();
-    void publishControlCmd(float throttle, float brake, float steer);
+        void initForROS();
+        void cbFromTwistCmd(const geometry_msgs::TwistStamped::ConstPtr &msg);
+        void cbFromRecvEnable(const std_msgs::Bool::ConstPtr &msg);
+        void cbFromCurrentVelocity(const geometry_msgs::TwistStamped::ConstPtr &msg);
+        PredictedControlValues getPredictedControlValues();
+        void publishControlCmd(const float throttle, const float brake, const float steer);
 
-    double vehicle_mass_, fuel_capacity_, brake_deadband_, decel_limit_, accel_limit_, wheel_radius_, wheel_base_, steer_ratio_, max_lat_accel_, max_steer_angle_;
-    bool sys_enable_;
-    float throttle_, brake_, steer_;
+        double vehicle_mass_, fuel_capacity_, brake_deadband_, decel_limit_, accel_limit_, 
+                wheel_radius_, wheel_base_, steer_ratio_, max_lat_accel_, max_steer_angle_;
+        bool sys_enable_;
+        float throttle_, brake_, steer_;
 
-    geometry_msgs::TwistStamped twist_cmd_;
-    geometry_msgs::TwistStamped cur_velocity_;
+        geometry_msgs::TwistStamped twist_cmd_;
+        geometry_msgs::TwistStamped cur_velocity_;
 
+        Controller controller_;
 };
-
-
-
 }
 
 #endif
