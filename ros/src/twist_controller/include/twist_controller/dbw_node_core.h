@@ -38,6 +38,7 @@
 #include <dbw_mkz_msgs/SteeringCmd.h>
 #include <dbw_mkz_msgs/BrakeCmd.h>
 #include <dbw_mkz_msgs/SteeringReport.h>
+#include <dbw_mkz_msgs/FuelLevelReport.h>
 #include "yaw_controller.h"
 #include "PIDControl.h"
 #include "lowpassfilter.h"
@@ -45,7 +46,9 @@
 #include <dynamic_reconfigure/server.h>
 #include <twist_controller/ControllerConfig.h>
 
-#define LOOP_RATE (50)
+#define LOOP_RATE   (50)
+#define TORQUE_MAX  (3412)  //Nm, maximum torque
+#define MAX_THROTTLE_PERCENTAGE  (0.8) //max throttle percentage
 
 namespace DBWNODE_NS{
 
@@ -76,7 +79,7 @@ private:
     ros::NodeHandle private_nh_;
 
     ros::Publisher throttle_pub_, brake_pub_, steer_pub_;
-    ros::Subscriber sub_vel_, sub_cur_vel_, sub_enable_, sub_steer_report_;
+    ros::Subscriber sub_vel_, sub_cur_vel_, sub_enable_, sub_steer_report_, sub_fuel_report_;
 
     void initForROS();
     void cbFromTwistCmd(const geometry_msgs::TwistStamped::ConstPtr& msg);
@@ -85,12 +88,12 @@ private:
     void cbFromSteeringReport(const dbw_mkz_msgs::SteeringReport::ConstPtr& msg);
     //dynamic re-configure
     void cbFromDynamicReconfig(twist_controller::ControllerConfig& config, uint32_t level);
-
+    void cbFromFuelLevelReport(const dbw_mkz_msgs::FuelLevelReport::ConstPtr& msg);
 
     void getPredictedControlValues();
     void publishControlCmd(Controller v_controller);
 
-    double vehicle_mass_, fuel_capacity_, brake_deadband_, decel_limit_, accel_limit_, wheel_radius_, wheel_base_, steer_ratio_, max_lat_accel_, max_steer_angle_;
+    double vehicle_mass_, fuel_capacity_, brake_deadband_, decel_limit_, accel_limit_, wheel_radius_, wheel_base_, steer_ratio_, max_lat_accel_, max_steer_angle_, fuel_level_;
     bool sys_enable_;
     double control_gap_;
     //float throttle_, brake_, steer_;

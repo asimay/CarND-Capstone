@@ -2,13 +2,13 @@
 
 namespace DBWNODE_NS{
 
-//using namespace std;
+using namespace std;
 
 PIDControl::PIDControl()
 {
     is_initialized_ = false;
-    min_num_ = std::numeric_limits<float>::min();
-    max_num_ = std::numeric_limits<float>::max();
+    min_num_ = -MAX_THROTTLE_PERCENTAGE;
+    max_num_ = MAX_THROTTLE_PERCENTAGE;
 }
 
 PIDControl::~PIDControl()
@@ -27,7 +27,6 @@ void PIDControl::initial(double kp, double ki, double kd)
     }
 
 }
-
 
 void PIDControl::resetError()
 {
@@ -48,14 +47,18 @@ double PIDControl::step(double cte, double sample_time)
 {
     this->updateError(cte, sample_time);
 
-    double val = kp_* p_error_ + kd_ * d_error_ + ki_ * i_error_;
+    double y = kp_* p_error_ + ki_ * i_error_ + kd_ * d_error_ ;
+
+    double val = max(min_num_, min(y, max_num_));
 
     if(val > max_num_)
     {
         val = max_num_;
     }
     else if(val < min_num_)
+    {
         val = min_num_;
+    }
 
     return val;
 
@@ -65,16 +68,18 @@ void PIDControl::setRange(double min, double max)
 { 
     min_num_ = min; 
     max_num_ = max; 
+
+    return;
 }
 
 //reset PID gains.
 void PIDControl::setGains(double kp, double ki, double kd)
 {
-        kp_ = kp;
-        ki_ = ki;
-        kd_ = kd;
+    kp_ = kp;
+    ki_ = ki;
+    kd_ = kd;
 
-        return;
+    return;
 }
 
 }

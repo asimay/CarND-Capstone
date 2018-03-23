@@ -32,6 +32,9 @@
 #define PID_CONTROL_H
 
 #include <limits>
+#include <algorithm>
+
+#define MAX_THROTTLE_PERCENTAGE  (0.8) //max throttle percentage
 
 namespace DBWNODE_NS{
 
