@@ -4,7 +4,7 @@ Project Team members
 
  Ferran Garriga - zegnus@gmail.com - UTC+0 - London, UK
 
- Leon Li - asimay_y@126.com - UTC+8 - Guangzhou, China (DBW_node development)
+ Leon Li - asimay_y@126.com - UTC+8 - Guangzhou, China  (**responsible for DBW_node development**)
 
  Shahzad Raza - raza.shahzad@gmail.com - UTC+4 - Dubai, United Arab Emirates
 
