@@ -63,10 +63,10 @@ class WaypointUpdater(object):
         # shift waypoint indexes to start on next_waypoint so it's easy to grab LOOKAHEAD_WPS
         #waypoints = waypoints[next_waypoint:] + waypoints[:next_waypoint]
         #waypoints = waypoints[:LOOKAHEAD_WPS]
-	waypoints = waypoints[next_waypoint : next_waypoint+LOOKAHEAD_WPS]
-	
-	#process_traffic_waypoint
-	waypoints = process_traffic_waypoint()
+        waypoints = waypoints[next_waypoint : next_waypoint+LOOKAHEAD_WPS]
+
+        #process_traffic_waypoint
+        waypoints = process_traffic_waypoint()
 
         lane = Lane()
         lane.waypoints = waypoints
@@ -82,18 +82,18 @@ class WaypointUpdater(object):
         self.traffic_waypoint = msg
 
     def process_traffic_waypoint(self, v_waypoints, tf_waypoint, velocity):
-        #find nearest vehicle waypoint to traffic waypoint 
-	closest_vidx = closest_waypoint(v_waypoints, tf_waypoint)
-		
-	#check the distance is safe or not
-	v_tf_distance = distance_p1_p2()
-		
-	if v_tf_distance < 40:
-		# set 30m's velocity to 0;
-		set_waypoint_velocity(self.base_waypoints, waypoint, velocity)
-		#spline the velocity from current place to 30m far away
-		
-	return v_waypoints
+        #find nearest vehicle waypoint to traffic waypoint
+        closest_vidx = closest_waypoint(v_waypoints, tf_waypoint)
+
+        #check the distance is safe or not
+        v_tf_distance = distance_p1_p2()
+
+        if v_tf_distance < 40:
+            # set 30m's velocity to 0;
+            set_waypoint_velocity(self.base_waypoints, waypoint, velocity)
+            #spline the velocity from current place to 30m far away
+
+            return v_waypoints
 			  
     def obstacle_cb(self, msg):
         self.obstacle_waypoint = msg
