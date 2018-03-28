@@ -144,16 +144,54 @@ class WaypointUpdater(object):
             int: the index within base_waypoints
         """
 
-        closest_len = 100000; # large number
-        closest_waypoint = 0;
+        closest_len = 100000 # large number
+        closest_waypoint_idx = 0
 
         for idx, waypoint in enumerate(waypoints):
             dist = self.distance_p1_p2(pose.pose.position, waypoint.pose.pose.position)
             if dist < closest_len:
                 closest_len = dist
-                closest_waypoint = idx
+                closest_waypoint_idx = idx
 
-        return closest_waypoint
+        return closest_waypoint_idx
+
+    def check_traffic_is_in_way(self):
+        """ check traffic is in the vehicle's way or not
+        from (vehicle's current pose index, vehicle's current pose index+LOOKAHEAD_WPS)
+        if not in the way, we don't need to care about traffic light signal,
+        if it is in the way, we should do a further step
+        """
+        # get traffic waypoint index
+        traffic_idx = self.traffic_waypoint 
+        # get vehicle current pose waypoint index
+        cur_idx = closest_waypoint(self.base_waypoints, self.current_pose)
+        if traffic_idx <= cur_idx or traffic_idx >= cur_idx + LOOKAHEAD_WPS :
+            # traffic light is not in the way
+            return False
+        
+        elif cur_idx < traffic_idx < cur_idx + LOOKAHEAD_WPS:
+            #traffic light is in the way
+            return True
+
+    def process_traffic(self):
+        waypoints = self.base_waypoints
+        tf_in_way = check_traffic_is_in_way()
+        if(not tf_in_way):
+            return waypoints
+
+        # TODO: if traffic light farthur than 30m(should tune), ignore it
+        #, else, take into consider
+
+        # if traffic light status is green, pass
+        # else, stop, and set velocity of path from traffic light to car,
+        # from 0 to current speed.
+
+        #if traffic_light_status == 0: # green light
+
+
+        # return modified waypoints
+        return waypoints
+
 
     def next_waypoint(self, waypoints, pose):
         """Identifies the closest path waypoint to the given position
