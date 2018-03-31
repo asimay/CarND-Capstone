@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PointStamped
 from styx_msgs.msg import Lane, Waypoint
 from std_msgs.msg import Int32
+import tf
 
 from waypoint_updater.srv import *
 import math
@@ -23,8 +24,6 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
-
 class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
@@ -36,18 +35,22 @@ class WaypointUpdater(object):
         rospy.Service('~next_waypoint', NextWaypoint, self.next_waypoint_cb)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
+        self.listener = tf.TransformListener()
 
         # TODO: Add other member variables you need below
-        self.traffic_waypoint = -1
-        self.obstacle_waypoint = -1
+        self.traffic_waypoint = None
+        self.obstacle_waypoint = None
         self.current_pose = None
         self.base_waypoints = None
+
+        self.max_decel = rospy.get_param("~max_decel")
+        self.lookahead_wps = rospy.get_param("~lookahead_wps") # Number of waypoints we will publish. You can change this number
 
         self.loop()
 
     def loop(self):
         # TODO: adjust rate
-        rate = rospy.Rate(0.5)
+        rate = rospy.Rate(5)
         while not rospy.is_shutdown():
             if self.current_pose is None or self.base_waypoints is None:
                 continue
@@ -59,6 +62,7 @@ class WaypointUpdater(object):
         """publish Lane message to /final_waypoints topic"""
 
         next_waypoint = self.next_waypoint(self.base_waypoints.waypoints, self.current_pose)
+<<<<<<< HEAD
         waypoints = self.base_waypoints.waypoints
         # shift waypoint indexes to start on next_waypoint so it's easy to grab LOOKAHEAD_WPS
         #waypoints = waypoints[next_waypoint:] + waypoints[:next_waypoint]
@@ -67,10 +71,46 @@ class WaypointUpdater(object):
 
         #process_traffic_waypoint
         waypoints = process_traffic_waypoint()
+=======
+        waypoints = self.base_waypoints.waypoints[next_waypoint:next_waypoint+self.lookahead_wps]
+
+        if self.traffic_waypoint and self.traffic_waypoint.data != -1:
+            waypoints = self.decelerate_waypoints(waypoints, next_waypoint)
+>>>>>>> 05c13b7b00bbcee5e315d525d865cabd1c6cec01
 
         lane = Lane()
         lane.waypoints = waypoints
         self.final_waypoints_pub.publish(lane)
+
+    def decelerate_waypoints(self, waypoints, closest_idx):
+        """decelerate waypoints to allow car time to slow down
+
+        Args:
+            waypoints (Waypoint[])
+            closest_idx (Int)
+
+        Returns:
+            waypoints (Waypoints[]): waypoints with decelerated velocities
+        """
+
+        temp = []
+
+        for i, wp in enumerate(waypoints):
+
+            p = Waypoint()
+            p.pose = wp.pose
+
+            stop_wp_idx = self.traffic_waypoint.data
+            stop_idx = max(stop_wp_idx - closest_idx - 2, 0) # Two waypoints from line so front of car stops at line
+            dist = self.distance(waypoints, i, stop_idx)
+            vel = math.sqrt(2 * self.max_decel * dist)
+            if vel < 1.:
+                vel = 0.
+
+            p.twist.twist.linear.x = min(vel, wp.twist.twist.linear.x)
+            temp.append(p)
+
+        return temp
 
     def pose_cb(self, msg):
         self.current_pose = msg
@@ -204,32 +244,21 @@ class WaypointUpdater(object):
         """
 
         closest_idx = self.closest_waypoint(waypoints, pose)
+
+        # check if passed closest waypoint (let ROS do the math)
         closest = waypoints[closest_idx]
-        num_waypoints = len(waypoints)
 
-        x = pose.pose.position.x
-        y = pose.pose.position.y
-
-        # TODO: is this the correct value for theta?
-        rotation_to_radian = 6.28 # 1 rotation = 6.28 radians
-        theta = pose.pose.orientation.z * rotation_to_radian
-
-        map_x = closest.pose.pose.position.x
-        map_y = closest.pose.pose.position.y
-
-        heading = math.atan2((map_y - y), (map_x - x))
-        theta_pos = math.fmod(theta + (2 * math.pi), 2 * math.pi)
-        heading_pos = math.fmod(heading + (2 * math.pi), 2 * math.pi)
-        angle = math.fabs(theta_pos - heading_pos)
-
-        if angle > math.pi:
-            angle = (2 * math.pi) - angle;
-
-        if angle > math.pi / 2:
-            closest_idx = (closest_idx + 1) % num_waypoints
+        try:
+            p_world = PointStamped(header=pose.header, point=closest.pose.pose.position)
+            transformed = self.listener.transformPoint('/base_link', p_world)
+            # if passed closest waypoint, choose the next waypoint
+            if transformed.point.x < 0:
+                num_waypoints = len(waypoints)
+                closest_idx = (closest_idx + 1) % num_waypoints
+        except Exception as e:
+            pass
 
         return closest_idx
-
 
 if __name__ == '__main__':
     try:

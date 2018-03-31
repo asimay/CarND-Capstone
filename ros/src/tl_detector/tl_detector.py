@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import Int32
-from geometry_msgs.msg import PointStamped, PoseStamped, Pose
+from geometry_msgs.msg import PointStamped, Point, PoseStamped, Pose
 from styx_msgs.msg import TrafficLightArray, TrafficLight, Waypoint, Lane
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge
@@ -166,11 +166,11 @@ class TLDetector(object):
             if self.is_visible(self.pose, closest_light.pose.pose.position):
                 light = closest_light
 
-                # get waypoint closest to upcoming light
-                closet_waypoint = self.get_closest_waypoint(closest_light.pose, self.waypoints.waypoints)
-                light_wp = closet_waypoint - 1 # -1 so it's just before the light
-                if light_wp < 0:
-                    light_wp = len(closet_waypoint) - light_wp
+                # get stopping waypoint
+                x, y = stop_line_positions[closest_idx]
+                pose_stop = Pose(position=Point(x=x, y=y))
+                stamped = PoseStamped(pose=pose_stop, header=self.pose.header)
+                light_wp = self.get_closest_waypoint(stamped, self.waypoints.waypoints)
 
         if light:
             state = self.get_light_state(light)
@@ -178,50 +178,41 @@ class TLDetector(object):
 
         return -1, TrafficLight.UNKNOWN
 
-    def transform_point(self, pose, position):
+    def transform_point(self, header, point):
         """
         create point so we can transform perspective to use camera as reference frame
         todo: for precise measurement, transform in reference to camera instead of /base_link
 
         Args:
-            pose (Pose): current pose of vehicle
-            position (Position): position to check
+            header (Header): header for transformation
+            point (Point): point to check
 
         Returns:
             point (PointStamped): transformed point
         """
-        header = pose.header
-        p_world = PointStamped()
-        p_world.header.seq = header.seq
-        p_world.header.stamp = header.stamp
-        p_world.header.frame_id = '/world'
-        p_world.point.x = position.x
-        p_world.point.y = position.y
-        p_world.point.z = position.z
-
+        p_world = PointStamped(header=header, point=point)
         self.listener.waitForTransform('/base_link', '/world', header.stamp, rospy.Duration(3.0))
         return self.listener.transformPoint('/base_link', p_world)
 
-    def is_visible(self, pose, position):
+    def is_visible(self, pose, point):
         """
         check if point is visible by projecting it onto 2d camera plane
         todo: distance check to prevent very far away points from passing
 
         Args:
             pose (Pose): current pose of vehicle
-            position (Position): position to check
+            point (Point): point to check
 
         Returns:
             bool: if point is visible
         """
 
-        transformed = self.transform_point(pose, position)
-        point = transformed.point
+        transformed = self.transform_point(pose.header, point)
 
         # pinhole camera model reverses x, y coordinates
-        x = -point.y # point.y = horizontal camera dimension
-        y = -point.z # point.z = vertical camera dimension
-        z = point.x # point.x = z/depth camera dimension
+        x = -transformed.point.y # point.y = horizontal camera dimension
+        y = -transformed.point.z # point.z = vertical camera dimension
+        z = transformed.point.x # point.x = z/depth camera dimension
 
         # todo: does this need to be more elegant?
         if z > self.max_visible_distance:
